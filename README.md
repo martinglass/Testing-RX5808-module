@@ -6,7 +6,7 @@
   created 03.01.2022 
   by Vlad Lesnov
   
-  Amended by Martin Glass 03.04.2022, for use with RotorHazard (and similar) projects.
+  Amended by Martin Glass 31.03.2022, for use with RotorHazard (and similar) projects.
 
 If you want to test whether the SPI bus on your RX5808 is working - here's a utility App that runs on the Nodes, which reads the RX5808 internal registers via SPI.
 
