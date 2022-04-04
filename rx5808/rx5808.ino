@@ -1,19 +1,43 @@
 /*
-  Testing RX5804 receiver module
+  Testing RX5808 receiver module
 
-  Turns an LED on if something went wrong. (Arduino Leonardo)
   Data in registers and RSSI value you can see on Serial monitor.
 
   created 03.01.2022 
   by Vlad Lesnov
-
+  https://github.com/VladLesnov/Testing-RX5808-module
   This example code is in the public domain.
+
+  Updated by Martin Glass on 31.03.2022
 */
 
+/*
 #define CS0_SPIDATA_PIN   4
 #define CS1_SPILE_PIN     3
 #define CS2_SPICLK_PIN    2
 #define RSSI_OUT_PIN      0
+
+// STM32 Black Pill
+#define CS0_SPIDATA_PIN   PB4
+#define CS1_SPILE_PIN     PB7
+#define CS2_SPICLK_PIN    PB3
+#define RSSI_OUT_PIN      PA0
+
+// Arduino Nano
+#define CS0_SPIDATA_PIN   11
+#define CS1_SPILE_PIN     10
+#define CS2_SPICLK_PIN    13
+#define RSSI_OUT_PIN      A0
+*/
+
+// Arduino Nano
+#define CS0_SPIDATA_PIN   11
+#define CS1_SPILE_PIN     10
+#define CS2_SPICLK_PIN    13
+#define RSSI_OUT_PIN      A0
+
+#define VREF 5.0 //Arduino
+//#define VREF 3.3 //STM32 
 
 #define TSPI 10 //uS
 #define READ_REG  0
@@ -42,36 +66,42 @@ void setup() {
   pinMode(LED_BUILTIN, OUTPUT);
   
   digitalWrite(CS1_SPILE_PIN,HIGH);
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void loop() {
   static uint8_t fsets=0;
 
-  float value = (analogRead(RSSI_OUT_PIN)*5.0)/1023;
-  if(fsets==0){
-    Serial.print(String(FSETS - 1) + "\t" + String(value));
-  }
-  else{
-    Serial.print(String(fsets - 1) + "\t" + String(value));
-  }
-      
-   for(uint8_t i=0;i<=0x0a;i++){
-      uint32_t temp = rx5808(i,READ_REG,0);
-      Serial.print("\t0x");
-      Serial.print(temp,HEX);  
-   }
-   uint32_t temp = rx5808(0x0F,READ_REG,0);
-   Serial.print("\t0x");
-   Serial.println(temp,HEX);  
-        
+  Serial.print("fsets: "+String(fsets) + "\t");
+
   uint32_t regData=0;
-  regData= (((uint32_t)N[fsets])<<7) | A[fsets];
+  regData= Reg01RX5808(FRQ[fsets]);
   rx5808(0x01,WRITE_REG,regData);
   delay(40);                         //important!!!
   if(rx5808(0x01,READ_REG,0)!= regData) digitalWrite(LED_BUILTIN,HIGH);
   else                                  digitalWrite(LED_BUILTIN,LOW);
-  
+
+//Print the current Frequency
+//  Serial.print(Reg01RX5808(FRQ[fsets]),HEX);
+  Serial.print("FREQ: " + String(FRQ[fsets]) + " ");
+
+
+// Read & Printout current RSSI Value
+  int v=analogRead(RSSI_OUT_PIN);
+  float value = (v*VREF)/1023;
+    Serial.print("RSSI: " + String(v) + " (" + String(value) + "V)      Reg");
+
+// Read & Printout Each Register loop (register 0-A & F)
+   for(uint8_t i=0;i<=0x0a;i++){                
+      uint32_t temp = rx5808(i,READ_REG,0);
+      Serial.print("\t"+String(i)+": 0x");
+      Serial.print(temp,HEX);  // Print Reg value
+   }
+   uint32_t temp = rx5808(0x0F,READ_REG,0);
+   Serial.print("\tSTATUS: 0x");
+   Serial.println(temp,HEX);  // Print Status
+//End of Register loop
+        
   ++fsets;
   if(fsets>=FSETS) fsets=0;
   delay(1000);
