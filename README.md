@@ -1,5 +1,5 @@
 # Testing-RX5808-module
-  Testing RX5804 receiver module
+  Testing RX5808 receiver module
 
   Data in registers and RSSI value you can see on Serial monitor.
 
